@@ -60,8 +60,53 @@ module instr_register_test (tb_ifc intf);  // interface port
 	Transaction tr;
 	virtual tb_ifc vifc;
 	static int temp = 0;
+	
+	covergroup input_measure;
+		cov_0: coverpoint vifc.cb.opcode {
+			bins val_zero = {ZERO};
+			bins val_passa = {PASSA};
+			bins val_passb = {PASSB};
+			bins val_add = {ADD};
+			bins val_sub = {SUB};
+			bins val_mult ={ MULT};
+			bins val_div ={DIV};
+			bins val_mod ={MOD};
+		}
+		
+		cov_1: coverpoint vifc.cb.operand_a {
+			bins val_op_a[] = {[-15:15]};
+		}
+		
+		cov_2: coverpoint vifc.cb.operand_b {
+			bins val_op_b[] = {[0:15]};
+		}
+		
+		cov_3: coverpoint vifc.cb.operand_a {
+			bins val_neg = {[-15:-1]};
+			bins val_poz = {[0:15]};
+		}
+		
+		cov_4: cross cov_0,cov_3 {
+			ignore_bins pos_ignore = binsof (cov_3.val_poz);
+		}
+		
+		cov_separat_a: coverpoint vifc.cb.operand_a {
+			bins  val_op_a_limita_neg = {-15};
+			bins val_op_a_limita_poz = {15};
+		}
+		
+		cov_separat_b: coverpoint vifc.cb.operand_b {
+			bins  val_op_a_limita_neg = {0};
+			bins  val_op_b_limita_poz = {15};
+		}
+		
+		cov_5: cross cov_0,cov_separat_a, cov_separat_b {
+		}
+	endgroup
+	
 	function new (virtual tb_ifc vifc);
 		tr = new();
+		input_measure = new();
 		this.vifc = vifc;
 	endfunction
 	
@@ -88,10 +133,11 @@ module instr_register_test (tb_ifc intf);  // interface port
 		$display("\nWriting values to register stack...");
 		@vifc.cb vifc.cb.load_en <= 1'b1;  // enable writing to register
 		
-		repeat (3) begin
+		repeat (500) begin
 			@vifc.cb tr.randomize;
 			this.assignSiganls();
 			@vifc.cb tr.print_transaction;
+			this.input_measure.sample();
 		end
 		@vifc.cb vifc.cb.load_en <= 1'b0;  // turn-off writing to register
 	endtask;

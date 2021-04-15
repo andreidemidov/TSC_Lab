@@ -1,3 +1,4 @@
+
 /***********************************************************************
  * A SystemVerilog RTL model of an instruction regisgter:
  * User-defined type definitions
